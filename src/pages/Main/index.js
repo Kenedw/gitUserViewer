@@ -1,8 +1,22 @@
 import React, { Component } from 'react';
-
+import { keybord } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-import { Container, Form, SubmitButton, Input } from './styles';
+import api from '../../services/api';
+
+import {
+  Container,
+  Form,
+  SubmitButton,
+  Input,
+  List,
+  User,
+  Avatar,
+  Name,
+  Bio,
+  ProfileButton,
+  ProfileButtonText,
+} from './styles';
 
 export default class Main extends Component {
   state = {
@@ -10,8 +24,24 @@ export default class Main extends Component {
     users: [],
   };
 
-  handleAddUser = () => {
-    console.tron.log(this.state.newUser);
+  handleAddUser = async () => {
+    const { users, newUser } = this.state;
+
+    const response = await api.get(`/users/${newUser}`);
+
+    const data = {
+      name: response.data.name,
+      login: response.data.login,
+      bio: response.data.bio,
+      avatar: response.data.avatar_url,
+    };
+
+    this.setState({
+      users: [...users, data],
+      newUser: '',
+    });
+
+    keybord.dismiss();
   };
 
   render() {
@@ -25,7 +55,7 @@ export default class Main extends Component {
             autoCapitalize="none"
             placeholder="Add user"
             value={newUser}
-            onChargeText={text => this.setState({ newUser: text })}
+            onChangeText={text => this.setState({ newUser: text })}
             returnKeyType="send"
             onSubmitEditing={this.handleAddUser}
           />
@@ -33,6 +63,22 @@ export default class Main extends Component {
             <Icon name="add" size={20} color="#fff" />
           </SubmitButton>
         </Form>
+
+        <List
+          data={users}
+          keyExtractor={user => user.login}
+          renderItem={({ item }) => (
+            <User>
+              <Avatar source={{ uri: item.avatar }} />
+              <Name>{item.name}</Name>
+              <Bio>{item.bio}</Bio>
+
+              <ProfileButton onPress={() => {}}>
+                <ProfileButtonText>View profile</ProfileButtonText>
+              </ProfileButton>
+            </User>
+          )}
+        />
       </Container>
     );
   }
