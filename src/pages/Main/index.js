@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { keybord, ActivityIndicator } from 'react-native';
+import { keybord, ActivityIndicator, RefreshControl } from 'react-native';
 import PropTypes from 'prop-types';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -71,6 +71,7 @@ export default class Main extends Component {
       users: [...users, data],
       newUser: '',
       loading: false,
+      refreshing: false,
     });
 
     keybord.dismiss();
@@ -82,8 +83,33 @@ export default class Main extends Component {
     navigation.navigate('User', { user });
   };
 
+  refreshList = async () => {
+    const { users } = this.state;
+    const newUsers = [];
+
+    this.setState({ refreshing: true });
+
+    const promises = users.map(async user => {
+      const { login } = user;
+      const response = await api.get(`/users/${login}`);
+
+      const data = {
+        name: response.data.name,
+        login: response.data.login,
+        bio: response.data.bio,
+        avatar: response.data.avatar_url,
+      };
+
+      newUsers.push(data);
+    });
+
+    await Promise.all(promises);
+
+    this.setState({ users: newUsers, refreshing: false });
+  };
+
   render() {
-    const { users, newUser, loading } = this.state;
+    const { users, newUser, loading, refreshing } = this.state;
 
     return (
       <Container>
@@ -109,6 +135,12 @@ export default class Main extends Component {
         <List
           data={users}
           keyExtractor={user => user.login}
+          refreshControl={
+            <RefreshControl
+              onRefresh={this.refreshList}
+              refreshing={refreshing}
+            />
+          }
           renderItem={({ item }) => (
             <User>
               <Avatar source={{ uri: item.avatar }} />
