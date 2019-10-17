@@ -4,6 +4,7 @@ import { AsyncStorage } from 'react-native';
 if (__DEV__) {
   const tron = Reacttotron.configure({
     name: 'MyApp',
+    host: '192.168.25.145',
   })
     .useReactNative()
     .setAsyncStorageHandler(AsyncStorage)

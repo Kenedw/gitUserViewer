@@ -3,7 +3,6 @@ import PropType from 'prop-types';
 import { ActivityIndicator } from 'react-native';
 
 import api from '../../services/api';
-
 import {
   Container,
   Header,
@@ -28,6 +27,7 @@ export default class User extends Component {
   static propTypes = {
     navigation: PropType.shape({
       getParam: PropType.func,
+      navigate: PropType.func,
     }).isRequired,
   };
 
@@ -72,6 +72,13 @@ export default class User extends Component {
     this.setState({ stars: response.data, refreshing: false, page: 2 });
   };
 
+  handleNavigation = item => {
+    const { navigation } = this.props;
+    const { html_url: url } = item;
+
+    navigation.navigate('Webview', { url, title: 'GitHub' });
+  };
+
   render() {
     const { navigation } = this.props;
     const { stars, refreshing } = this.state;
@@ -86,23 +93,25 @@ export default class User extends Component {
           <Bio>{user.bio}</Bio>
         </Header>
         {stars.length ? (
-        <Stars
-          data={stars}
-          keyExtrator={star => String(star.id)}
+          <Stars
+            data={stars}
+            keyExtrator={star => String(star.id)}
             onEndReachedThreshold={0.4} // Carrega mais itens quando chegar em 40% do fim
             onEndReached={this.loadMore} // Função que carrega mais itens
             onRefresh={this.refreshList} // Função dispara quando o usuário arrasta a lista pra baixo
             refreshing={refreshing} // Variável que armazena um estado true/false que representa se a lista está atualizando
-          renderItem={({ item }) => (
-            <Starred>
-              <OwnerAvatar source={{ uri: item.owner.avatar_url }} />
-              <Info>
-                <Title>{item.name}</Title>
-                <Author>{item.owner.login}</Author>
-              </Info>
-            </Starred>
-          )}
-        />
+            renderItem={({ item }) => (
+              <Starred onPress={() => this.handleNavigation(item)}>
+                <>
+                  <OwnerAvatar source={{ uri: item.owner.avatar_url }} />
+                  <Info>
+                    <Title>{item.name}</Title>
+                    <Author>{item.owner.login}</Author>
+                  </Info>
+                </>
+              </Starred>
+            )}
+          />
         ) : (
           <Indicator>
             <ActivityIndicator size="large" color="#7159c1" />
