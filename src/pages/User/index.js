@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropType from 'prop-types';
+import { ActivityIndicator } from 'react-native';
 
 import api from '../../services/api';
 
@@ -15,6 +16,8 @@ import {
   Info,
   Title,
   Author,
+  Indicator,
+  TextIndicator,
 } from './styles';
 
 export default class User extends Component {
@@ -30,6 +33,8 @@ export default class User extends Component {
 
   state = {
     stars: [],
+    page: 2,
+    refreshing: false,
   };
 
   async componentDidMount() {
@@ -41,9 +46,35 @@ export default class User extends Component {
     this.setState({ stars: response.data });
   }
 
+  loadMore = async () => {
+    const { page, stars } = this.state;
+    const { navigation } = this.props;
+    const user = navigation.getParam('user');
+
+    const response = await api.get(`/users/${user.login}/starred?page=${page}`);
+
+    if (response.data.length) {
+      this.setState({
+        stars: [...stars, ...response.data],
+        page: page + 1,
+      });
+    }
+  };
+
+  refreshList = async () => {
+    const { navigation } = this.props;
+    const user = navigation.getParam('user');
+
+    this.setState({ refreshing: true });
+
+    const response = await api.get(`/users/${user.login}/starred`);
+
+    this.setState({ stars: response.data, refreshing: false, page: 2 });
+  };
+
   render() {
     const { navigation } = this.props;
-    const { stars } = this.state;
+    const { stars, refreshing } = this.state;
 
     const user = navigation.getParam('user');
 
@@ -54,10 +85,14 @@ export default class User extends Component {
           <Name>{user.name}</Name>
           <Bio>{user.bio}</Bio>
         </Header>
-
+        {stars.length ? (
         <Stars
           data={stars}
           keyExtrator={star => String(star.id)}
+            onEndReachedThreshold={0.4} // Carrega mais itens quando chegar em 40% do fim
+            onEndReached={this.loadMore} // Função que carrega mais itens
+            onRefresh={this.refreshList} // Função dispara quando o usuário arrasta a lista pra baixo
+            refreshing={refreshing} // Variável que armazena um estado true/false que representa se a lista está atualizando
           renderItem={({ item }) => (
             <Starred>
               <OwnerAvatar source={{ uri: item.owner.avatar_url }} />
@@ -68,6 +103,12 @@ export default class User extends Component {
             </Starred>
           )}
         />
+        ) : (
+          <Indicator>
+            <ActivityIndicator size="large" color="#7159c1" />
+            <TextIndicator> Loading...</TextIndicator>
+          </Indicator>
+        )}
       </Container>
     );
   }

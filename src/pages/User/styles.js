@@ -64,9 +64,26 @@ export const Info = styled.View`
 export const Title = styled.Text.attrs({
   numberOfLines: 1,
 })`
-  font-size: 13px;
-  color: #666;
-  margin-top: 2px;
+  font-size: 15px;
+  font-weight: bold;
+  color: #333;
 `;
 
-export const Author = styled.Text``;
+export const Author = styled.Text`
+  margin-top: 2px;
+  font-size: 13px;
+  color: #666;
+`;
+
+export const Indicator = styled.View`
+  flex: 1;
+  justify-content: center;
+  padding: 10px;
+`;
+
+export const TextIndicator = styled.Text`
+  color: #666;
+  font-size: 13px;
+  margin-top: 2px;
+  text-align: center;
+`;
