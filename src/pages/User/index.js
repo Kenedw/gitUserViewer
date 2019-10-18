@@ -35,6 +35,7 @@ export default class User extends Component {
     stars: [],
     page: 2,
     refreshing: false,
+    notFound: false,
   };
 
   async componentDidMount() {
@@ -43,7 +44,11 @@ export default class User extends Component {
 
     const response = await api.get(`/users/${user.login}/starred`);
 
-    this.setState({ stars: response.data });
+    if (response.data.length) {
+      this.setState({ stars: response.data });
+    } else {
+      this.setState({ notFound: true });
+    }
   }
 
   loadMore = async () => {
@@ -69,7 +74,11 @@ export default class User extends Component {
 
     const response = await api.get(`/users/${user.login}/starred`);
 
-    this.setState({ stars: response.data, refreshing: false, page: 2 });
+    if (response.data.length) {
+      this.setState({ stars: response.data, refreshing: false, page: 2 });
+    } else {
+      this.setState({ notFound: true });
+    }
   };
 
   handleNavigation = item => {
@@ -81,7 +90,7 @@ export default class User extends Component {
 
   render() {
     const { navigation } = this.props;
-    const { stars, refreshing } = this.state;
+    const { stars, refreshing, notFound } = this.state;
 
     const user = navigation.getParam('user');
 
@@ -113,10 +122,18 @@ export default class User extends Component {
             )}
           />
         ) : (
-          <Indicator>
-            <ActivityIndicator size="large" color="#7159c1" />
-            <TextIndicator> Loading...</TextIndicator>
-          </Indicator>
+          <>
+            {notFound ? (
+              <Indicator>
+                <TextIndicator> User didn&apos;t give stars </TextIndicator>
+              </Indicator>
+            ) : (
+              <Indicator>
+                <ActivityIndicator size="large" color="#7159c1" />
+                <TextIndicator> Loading...</TextIndicator>
+              </Indicator>
+            )}
+          </>
         )}
       </Container>
     );
