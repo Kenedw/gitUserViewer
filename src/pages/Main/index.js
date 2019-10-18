@@ -18,6 +18,7 @@ import {
   Bio,
   ProfileButton,
   ProfileButtonText,
+  RemoveButton,
 } from './styles';
 
 export default class Main extends Component {
@@ -35,6 +36,7 @@ export default class Main extends Component {
     newUser: '',
     users: [],
     loading: false,
+    isError: false,
   };
 
   async componentDidMount() {
@@ -58,22 +60,26 @@ export default class Main extends Component {
 
     this.setState({ loading: true });
 
-    const response = await api.get(`/users/${newUser}`);
+    try {
+      const response = await api.get(`/users/${newUser}`);
 
-    const data = {
-      name: response.data.name,
-      login: response.data.login,
-      bio: response.data.bio,
-      avatar: response.data.avatar_url,
-    };
+      const data = {
+        name: response.data.name,
+        login: response.data.login,
+        bio: response.data.bio,
+        avatar: response.data.avatar_url,
+      };
 
-    this.setState({
-      users: [...users, data],
-      newUser: '',
-      loading: false,
-      refreshing: false,
-    });
-
+      this.setState({
+        users: [...users, data],
+        newUser: '',
+        loading: false,
+        isError: false,
+      });
+    } catch (e) {
+      console.tron.log(e);
+      this.setState({ loading: false, isError: true });
+    }
     keybord.dismiss();
   };
 
@@ -105,11 +111,25 @@ export default class Main extends Component {
 
     await Promise.all(promises);
 
-    this.setState({ users: newUsers, refreshing: false });
+    this.setState({ users: newUsers, refreshing: false, isError: false });
+  };
+
+  handleRemove = async ({ name }) => {
+    const { users } = this.state;
+
+    console.tron.log(name);
+
+    const newUsers = await users.filter(user => {
+      return user.name !== name;
+    });
+
+    console.tron.log(newUsers);
+
+    this.setState({ users: newUsers });
   };
 
   render() {
-    const { users, newUser, loading, refreshing } = this.state;
+    const { users, newUser, loading, refreshing, isError } = this.state;
 
     return (
       <Container>
@@ -122,6 +142,7 @@ export default class Main extends Component {
             onChangeText={text => this.setState({ newUser: text })}
             returnKeyType="send"
             onSubmitEditing={this.handleAddUser}
+            error={isError}
           />
           <SubmitButton onPress={this.handleAddUser} isloading={loading}>
             {loading ? (
@@ -143,10 +164,12 @@ export default class Main extends Component {
           }
           renderItem={({ item }) => (
             <User>
+              <RemoveButton onPress={() => this.handleRemove(item)}>
+                <Icon name="delete" size={20} color="#BBB" />
+              </RemoveButton>
               <Avatar source={{ uri: item.avatar }} />
               <Name>{item.name}</Name>
               <Bio>{item.bio}</Bio>
-
               <ProfileButton onPress={() => this.handleNavigation(item)}>
                 <ProfileButtonText>View profile</ProfileButtonText>
               </ProfileButton>
